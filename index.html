@@ -30,13 +30,11 @@
     width:52px; height:52px; font-size:22px; box-shadow:0 2px 8px rgba(0,0,0,0.3);
     cursor:pointer;
   }
-  /* 정보 팝업 */
   .iw { padding:12px 14px; min-width:200px; font-size:13px; line-height:1.6; }
   .iw .badge { display:inline-block; padding:2px 8px; border-radius:10px; color:#fff; font-size:12px; font-weight:600; }
   .badge-blue{ background:#1E88E5; } .badge-red{ background:#C62828; }
   .iw .type { color:#666; font-size:12px; margin-top:2px; }
   .iw .addr { margin-top:4px; font-weight:600; }
-  /* 입력하기 버튼 */
   .iw .inputBtn {
     display:block; width:100%; margin-top:10px; padding:9px 0;
     background:#0D47A1; color:#fff; text-align:center; text-decoration:none;
@@ -70,15 +68,41 @@
 <div id="empty"></div>
 
 <!-- ⬇️⬇️⬇️ 본인 카카오 JavaScript 키로 교체하세요 (appkey= 뒤) ⬇️⬇️⬇️ -->
-<script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=1846d1a5ae2dbb949cebe143caaadb78&autoload=false"></script>
+<script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=여기에_본인_JavaScript_키_입력&autoload=false"></script>
 <!-- ⬆️⬆️⬆️ 본인 카카오 JavaScript 키로 교체하세요 ⬆️⬆️⬆️ -->
 
 <script>
-// ===== Power Apps 딥링크 기본 URL =====
-// 핀의 "이 장비 입력하기" 버튼이 이 주소 뒤에 &deviceId=핀ID 를 붙여서 엽니다.
-var POWERAPPS_URL = "https://apps.powerapps.com/play/e/default-e6c9ec09-8430-4a99-bf15-242bc089b409/a/d68db9c3-276a-4916-ae47-3b0954c3daea?tenantId=e6c9ec09-8430-4a99-bf15-242bc089b409";
+// ============================================================
+//  Power Apps 딥링크 설정값
+// ============================================================
+var APP_ID    = "d68db9c3-276a-4916-ae47-3b0954c3daea";
+var TENANT_ID = "e6c9ec09-8430-4a99-bf15-242bc089b409";
+var ENV_ID    = "e6c9ec09-8430-4a99-bf15-242bc089b409"; // 환경 ID (테넌트와 동일)
 
-// ===== URL 파라미터 읽기 =====
+// PC(웹브라우저)용 딥링크 기본 주소
+var PC_URL = "https://apps.powerapps.com/play/e/default-" + ENV_ID +
+             "/a/" + APP_ID + "?tenantId=" + TENANT_ID;
+
+// 모바일 앱용 딥링크 기본 주소 (ms-apps://, environmentId + restartApp 필수)
+var MOBILE_URL = "ms-apps:///providers/Microsoft.PowerApps/apps/" + APP_ID +
+                 "?tenantId=" + TENANT_ID +
+                 "&environmentId=" + ENV_ID +
+                 "&restartApp=true";
+
+// 기기가 모바일인지 자동 감지
+function isMobile(){
+  return /Android|iPhone|iPad|iPod|Windows Phone/i.test(navigator.userAgent);
+}
+
+// 핀 ID로 딥링크 URL 만들기 (기기에 맞춰 자동 선택)
+function buildDeepLink(pinId){
+  var base = isMobile() ? MOBILE_URL : PC_URL;
+  return base + "&deviceId=" + encodeURIComponent(pinId);
+}
+
+// ============================================================
+//  URL 파라미터 읽기
+// ============================================================
 function getParam(name){
   var p = new URLSearchParams(window.location.search);
   return p.get(name);
@@ -99,7 +123,6 @@ kakao.maps.load(function(){
     level: 5
   });
 
-  // 내 위치 핀 + 반경
   if (hasMyLoc) {
     new kakao.maps.Marker({
       map: map,
@@ -116,7 +139,6 @@ kakao.maps.load(function(){
     });
   }
 
-  // 데이터 파싱
   var devices = [];
   if (rawData) {
     try { devices = JSON.parse(rawData); } catch(e){ devices = []; }
@@ -144,7 +166,7 @@ kakao.maps.load(function(){
     var addr   = d.addr || d.MapAddr || d.설치주소 || '주소 정보 없음';
     var color  = d.color || d.PinColor || '#C62828';
     var dbtype = d.type || d.DBType || '';
-    var pinId  = d.id || d.PinID || '';   // ← Power Apps에서 넘긴 PinID
+    var pinId  = d.id || d.PinID || '';
     var isDone = (color.toUpperCase() === '#1E88E5');
 
     var marker = new kakao.maps.Marker({
@@ -160,11 +182,10 @@ kakao.maps.load(function(){
         : '<span class="badge badge-red">미처리</span>';
       var typeTxt = dbtype ? ('<div class="type">'+dbtype+'</div>') : '';
 
-      // 이 장비 입력하기 버튼 (PinID가 있을 때만)
       var btn = '';
       if (pinId) {
-        var deepUrl = POWERAPPS_URL + "&deviceId=" + encodeURIComponent(pinId);
-        btn = '<a class="inputBtn" href="'+ deepUrl +'" target="_blank" rel="noopener">이 장비 입력하기 ▶</a>';
+        var deepUrl = buildDeepLink(pinId);  // ← 기기 자동 감지
+        btn = '<a class="inputBtn" href="'+ deepUrl +'">이 장비 입력하기 ▶</a>';
       }
 
       var html = '<div class="iw">'
