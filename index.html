@@ -1,236 +1,431 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>GCM 현장 장비 지도</title>
-<style>
-  html, body { margin:0; padding:0; width:100%; height:100%; font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif; }
-  #map { width:100%; height:100vh; }
-  #topbar {
-    position:fixed; top:0; left:0; right:0; z-index:10;
-    background:rgba(13,71,161,0.95); color:#fff;
-    padding:10px 14px; font-size:14px; font-weight:600;
-    box-shadow:0 2px 6px rgba(0,0,0,0.2);
-    display:flex; justify-content:space-between; align-items:center;
-  }
-  #topbar .count { font-size:13px; font-weight:400; }
-  #legend {
-    position:fixed; bottom:16px; left:16px; z-index:10;
-    background:#fff; border-radius:10px; padding:10px 12px;
-    box-shadow:0 2px 8px rgba(0,0,0,0.25); font-size:13px; line-height:1.8;
-  }
-  #legend .dot { display:inline-block; width:12px; height:12px; border-radius:50%; margin-right:6px; vertical-align:middle; }
-  .dot-blue { background:#1E88E5; }
-  .dot-red  { background:#C62828; }
-  .dot-green{ background:#2E7D32; }
-  #recenter {
-    position:fixed; bottom:16px; right:16px; z-index:10;
-    background:#1E88E5; color:#fff; border:none; border-radius:50%;
-    width:52px; height:52px; font-size:22px; box-shadow:0 2px 8px rgba(0,0,0,0.3);
-    cursor:pointer;
-  }
-  .iw { padding:12px 14px; min-width:200px; font-size:13px; line-height:1.6; }
-  .iw .badge { display:inline-block; padding:2px 8px; border-radius:10px; color:#fff; font-size:12px; font-weight:600; }
-  .badge-blue{ background:#1E88E5; } .badge-red{ background:#C62828; }
-  .iw .type { color:#666; font-size:12px; margin-top:2px; }
-  .iw .addr { margin-top:4px; font-weight:600; }
-  .iw .inputBtn {
-    display:block; width:100%; margin-top:10px; padding:9px 0;
-    background:#0D47A1; color:#fff; text-align:center; text-decoration:none;
-    border-radius:8px; font-size:13px; font-weight:600; box-sizing:border-box;
-  }
-  .iw .inputBtn:active { background:#08306b; }
-  #empty {
-    position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:20;
-    background:#fff; padding:20px 24px; border-radius:12px; box-shadow:0 4px 16px rgba(0,0,0,0.25);
-    font-size:14px; color:#333; text-align:center; display:none; max-width:80%;
-  }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>GCM 현장 장비 지도</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    }
+ 
+    #map {
+      width: 100%;
+      height: 100vh;
+    }
+ 
+    #topbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 10;
+      background: rgba(13, 71, 161, 0.95);
+      color: #fff;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 600;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+ 
+    #topbar .count {
+      font-size: 13px;
+      font-weight: 400;
+    }
+ 
+    #legend {
+      position: fixed;
+      bottom: 16px;
+      left: 16px;
+      z-index: 10;
+      background: #fff;
+      border-radius: 10px;
+      padding: 10px 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+      font-size: 13px;
+      line-height: 1.8;
+    }
+ 
+    #legend .dot {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+ 
+    .dot-blue  { background: #1E88E5; }
+    .dot-red   { background: #C62828; }
+    .dot-green { background: #2E7D32; }
+ 
+    #recenter {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      z-index: 10;
+      background: #1E88E5;
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 52px;
+      height: 52px;
+      font-size: 22px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      cursor: pointer;
+    }
+ 
+    .iw {
+      padding: 12px 14px;
+      min-width: 220px;
+      font-size: 13px;
+      line-height: 1.6;
+      box-sizing: border-box;
+    }
+ 
+    .iw .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+ 
+    .badge-blue { background: #1E88E5; }
+    .badge-red  { background: #C62828; }
+ 
+    .iw .type {
+      color: #666;
+      font-size: 12px;
+      margin-top: 2px;
+    }
+ 
+    .iw .addr {
+      margin-top: 4px;
+      font-weight: 600;
+      word-break: keep-all;
+    }
+ 
+    .iw .inputBtn {
+      display: block;
+      width: 100%;
+      margin-top: 10px;
+      padding: 9px 0;
+      background: #0D47A1;
+      color: #fff;
+      text-align: center;
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      box-sizing: border-box;
+    }
+ 
+    .iw .inputBtn:active {
+      background: #08306b;
+    }
+ 
+    #empty {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 20;
+      background: #fff;
+      padding: 20px 24px;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+      font-size: 14px;
+      color: #333;
+      text-align: center;
+      display: none;
+      max-width: 80%;
+      line-height: 1.7;
+    }
+  </style>
 </head>
 <body>
-
-<div id="topbar">
-  <span>GCM 현장 장비 지도</span>
-  <span class="count" id="countTxt">불러오는 중...</span>
-</div>
-
-<div id="map"></div>
-
-<div id="legend">
-  <span class="dot dot-green"></span>내 위치<br>
-  <span class="dot dot-blue"></span>처리완료<br>
-  <span class="dot dot-red"></span>미처리
-</div>
-
-<button id="recenter" title="내 위치로">◎</button>
-
-<div id="empty"></div>
-
-<!-- ⬇️⬇️⬇️ 본인 카카오 JavaScript 키로 교체하세요 (appkey= 뒤) ⬇️⬇️⬇️ -->
-<script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=1846d1a5ae2dbb949cebe143caaadb78&autoload=false"></script>
-<!-- ⬆️⬆️⬆️ 본인 카카오 JavaScript 키로 교체하세요 ⬆️⬆️⬆️ -->
-
-<script>
-// ============================================================
-//  Power Apps 딥링크 설정값
-// ============================================================
-var APP_ID    = "d68db9c3-276a-4916-ae47-3b0954c3daea";
-var TENANT_ID = "e6c9ec09-8430-4a99-bf15-242bc089b409";
-var ENV_ID    = "3ae96e11-352d-e1f5-847c-9536e550f795"; // 환경 ID (테넌트와 동일)
-
-// PC(웹브라우저)용 딥링크 기본 주소
-var PC_URL = "https://apps.powerapps.com/play/e/default-" + ENV_ID +
-             "/a/" + APP_ID + "?tenantId=" + TENANT_ID;
-
-// 모바일 앱용 딥링크 기본 주소 (ms-apps://, environmentId + restartApp 필수)
-var MOBILE_URL = "ms-apps:///providers/Microsoft.PowerApps/apps/" + APP_ID +
-                 "?tenantId=" + TENANT_ID +
-                 "&environmentId=" + ENV_ID +
-                 "&restartApp=true";
-
-// 기기가 모바일인지 자동 감지
-function isMobile(){
-  return /Android|iPhone|iPad|iPod|Windows Phone/i.test(navigator.userAgent);
-}
-
-// 핀 ID로 딥링크 URL 만들기 (기기에 맞춰 자동 선택)
-function buildDeepLink(pinId){
-  var base = isMobile() ? MOBILE_URL : PC_URL;
-  return base + "&deviceId=" + encodeURIComponent(pinId);
-}
-
-// ============================================================
-//  URL 파라미터 읽기
-// ============================================================
-function getParam(name){
-  var p = new URLSearchParams(window.location.search);
-  return p.get(name);
-}
-var centerLat = parseFloat(getParam('centerLat'));
-var centerLng = parseFloat(getParam('centerLng'));
-var rawData   = getParam('data');
-
-var DEFAULT_LAT = 37.5943, DEFAULT_LNG = 127.1296;
-
-kakao.maps.load(function(){
-  var hasMyLoc = !isNaN(centerLat) && !isNaN(centerLng);
-  var startLat = hasMyLoc ? centerLat : DEFAULT_LAT;
-  var startLng = hasMyLoc ? centerLng : DEFAULT_LNG;
-
-  var map = new kakao.maps.Map(document.getElementById('map'), {
-    center: new kakao.maps.LatLng(startLat, startLng),
-    level: 5
-  });
-
-  if (hasMyLoc) {
-    new kakao.maps.Marker({
-      map: map,
-      position: new kakao.maps.LatLng(centerLat, centerLng),
-      image: makePin('#2E7D32', true),
-      zIndex: 100
-    });
-    new kakao.maps.Circle({
-      map: map,
-      center: new kakao.maps.LatLng(centerLat, centerLng),
-      radius: 2000,
-      strokeWeight: 2, strokeColor:'#1E88E5', strokeOpacity:0.6,
-      fillColor:'#1E88E5', fillOpacity:0.05
-    });
-  }
-
-  var devices = [];
-  if (rawData) {
-    try { devices = JSON.parse(rawData); } catch(e){ devices = []; }
-  }
-
-  var countTxt = document.getElementById('countTxt');
-  if (!devices || devices.length === 0) {
-    countTxt.textContent = '장비 0개';
-    var empty = document.getElementById('empty');
-    empty.style.display = 'block';
-    empty.innerHTML = '표시할 장비가 없습니다.<br>Power Apps에서 「내 주변 조회」 후<br>다시 열어주세요.';
-    return;
-  }
-  countTxt.textContent = '장비 ' + devices.length + '개';
-
-  var iw = new kakao.maps.InfoWindow({ removable:true });
-  var bounds = new kakao.maps.LatLngBounds();
-  if (hasMyLoc) bounds.extend(new kakao.maps.LatLng(centerLat, centerLng));
-
-  devices.forEach(function(d){
-    var lat = parseFloat(d.lat != null ? d.lat : (d.MapLat != null ? d.MapLat : d.Latitude));
-    var lng = parseFloat(d.lng != null ? d.lng : (d.MapLng != null ? d.MapLng : d.Longitude));
-    if (isNaN(lat) || isNaN(lng)) return;
-
-    var addr   = d.addr || d.MapAddr || d.설치주소 || '주소 정보 없음';
-    var color  = d.color || d.PinColor || '#C62828';
-    var dbtype = d.type || d.DBType || '';
-    var pinId  = d.id || d.PinID || '';
-    var isDone = (color.toUpperCase() === '#1E88E5');
-
-    var marker = new kakao.maps.Marker({
-      map: map,
-      position: new kakao.maps.LatLng(lat, lng),
-      image: makePin(color, false)
-    });
-    bounds.extend(new kakao.maps.LatLng(lat, lng));
-
-    kakao.maps.event.addListener(marker, 'click', function(){
-      var badge = isDone
-        ? '<span class="badge badge-blue">처리완료</span>'
-        : '<span class="badge badge-red">미처리</span>';
-      var typeTxt = dbtype ? ('<div class="type">'+dbtype+'</div>') : '';
-
-      var btn = '';
-      if (pinId) {
-        var deepUrl = buildDeepLink(pinId);  // ← 기기 자동 감지
-        btn = '<a class="inputBtn" href="'+ deepUrl +'">이 장비 입력하기 ▶</a>';
-      }
-
-      var html = '<div class="iw">'
-               + badge + typeTxt
-               + '<div class="addr">'+ escapeHtml(addr) +'</div>'
-               + btn
-               + '</div>';
-      iw.setContent(html);
-      iw.open(map, marker);
-    });
-  });
-
-  if (!hasMyLoc && devices.length > 0) {
-    map.setBounds(bounds);
-  }
-
-  document.getElementById('recenter').addEventListener('click', function(){
-    if (hasMyLoc) {
-      map.setCenter(new kakao.maps.LatLng(centerLat, centerLng));
-      map.setLevel(5);
-    } else {
-      map.setBounds(bounds);
+ 
+  <div id="topbar">
+    <span>GCM 현장 장비 지도</span>
+    <span class="count" id="countTxt">불러오는 중...</span>
+  </div>
+ 
+  <div id="map"></div>
+ 
+  <div id="legend">
+    <span class="dot dot-green"></span>내 위치<br>
+    <span class="dot dot-blue"></span>처리완료<br>
+    <span class="dot dot-red"></span>미처리
+  </div>
+ 
+  <button id="recenter" title="내 위치로">◎</button>
+ 
+  <div id="empty"></div>
+ 
+  <!-- 카카오 JavaScript 키 -->
+  <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=1846d1a5ae2dbb949cebe143caaadb78&autoload=false"></script>
+ 
+  <script>
+    // ============================================================
+    // Power Apps 딥링크 설정
+    // ============================================================
+    var APP_ID    = "d68db9c3-276a-4916-ae47-3b0954c3daea";
+    var TENANT_ID = "e6c9ec09-8430-4a99-bf15-242bc089b409";
+ 
+    // ✅ PC용: 실제 실행 URL 그대로 사용
+    var PC_URL = "https://apps.powerapps.com/play/e/Default-e6c9ec09-8430-4a99-bf15-242bc089b409/a/d68db9c3-276a-4916-ae47-3b0954c3daea?tenantId=e6c9ec09-8430-4a99-bf15-242bc089b409";
+ 
+    // ✅ 모바일 앱용
+    var MOBILE_URL = "ms-apps:///providers/Microsoft.PowerApps/apps/" + APP_ID +
+                     "?tenantId=" + TENANT_ID +
+                     "&environmentId=Default-e6c9ec09-8430-4a99-bf15-242bc089b409" +
+                     "&restartApp=true";
+ 
+    function isMobile() {
+      return /Android|iPhone|iPad|iPod|Windows Phone/i.test(navigator.userAgent);
     }
-  });
-});
-
-function makePin(hex, isMe){
-  var size = isMe ? 26 : 22;
-  var svg =
-    '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+(size+8)+'" viewBox="0 0 24 32">'
-    + '<path d="M12 0C6 0 1 5 1 11c0 8 11 21 11 21s11-13 11-21C23 5 18 0 12 0z" fill="'+hex+'" stroke="#fff" stroke-width="2"/>'
-    + '<circle cx="12" cy="11" r="4" fill="#fff"/></svg>';
-  var url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
-  return new kakao.maps.MarkerImage(
-    url,
-    new kakao.maps.Size(size, size+8),
-    { offset: new kakao.maps.Point(size/2, size+8) }
-  );
-}
-
-function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g, function(c){
-    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
-  });
-}
-</script>
+ 
+    function buildDeepLink(pinId) {
+      var base = isMobile() ? MOBILE_URL : PC_URL;
+      var sep = base.indexOf("?") >= 0 ? "&" : "?";
+      return base + sep + "deviceId=" + encodeURIComponent(pinId);
+    }
+ 
+    // ============================================================
+    // URL 파라미터
+    // ============================================================
+    function getParam(name) {
+      var p = new URLSearchParams(window.location.search);
+      return p.get(name);
+    }
+ 
+    var centerLat = parseFloat(getParam("centerLat"));
+    var centerLng = parseFloat(getParam("centerLng"));
+    var rawData   = getParam("data");
+ 
+    var DEFAULT_LAT = 37.5943;
+    var DEFAULT_LNG = 127.1296;
+ 
+    kakao.maps.load(function () {
+      var hasMyLoc = !isNaN(centerLat) && !isNaN(centerLng);
+      var startLat = hasMyLoc ? centerLat : DEFAULT_LAT;
+      var startLng = hasMyLoc ? centerLng : DEFAULT_LNG;
+ 
+      var map = new kakao.maps.Map(document.getElementById("map"), {
+        center: new kakao.maps.LatLng(startLat, startLng),
+        level: 5
+      });
+ 
+      // ------------------------------------------------------------
+      // 내 위치 표시
+      // ------------------------------------------------------------
+      if (hasMyLoc) {
+        new kakao.maps.Marker({
+          map: map,
+          position: new kakao.maps.LatLng(centerLat, centerLng),
+          image: makePinByType("#2E7D32", "내위치", true),
+          zIndex: 100
+        });
+ 
+        new kakao.maps.Circle({
+          map: map,
+          center: new kakao.maps.LatLng(centerLat, centerLng),
+          radius: 2000,
+          strokeWeight: 2,
+          strokeColor: "#1E88E5",
+          strokeOpacity: 0.6,
+          fillColor: "#1E88E5",
+          fillOpacity: 0.05
+        });
+      }
+ 
+      // ------------------------------------------------------------
+      // Power Apps에서 넘어온 장비 데이터 읽기
+      // ------------------------------------------------------------
+      var devices = [];
+ 
+      if (rawData) {
+        try {
+          devices = JSON.parse(rawData);
+        } catch (e) {
+          devices = [];
+        }
+      }
+ 
+      var countTxt = document.getElementById("countTxt");
+ 
+      if (!devices || devices.length === 0) {
+        countTxt.textContent = "장비 0개";
+        var empty = document.getElementById("empty");
+        empty.style.display = "block";
+        empty.innerHTML = "표시할 장비가 없습니다.<br>Power Apps에서 「내 위치 확인」 후<br>「지도 열기」를 다시 눌러주세요.";
+        return;
+      }
+ 
+      countTxt.textContent = "장비 " + devices.length + "개";
+ 
+      var iw = new kakao.maps.InfoWindow({ removable: true });
+      var bounds = new kakao.maps.LatLngBounds();
+ 
+      if (hasMyLoc) {
+        bounds.extend(new kakao.maps.LatLng(centerLat, centerLng));
+      }
+ 
+      devices.forEach(function (d) {
+        var lat = parseFloat(
+          d.lat != null ? d.lat :
+          (d.MapLat != null ? d.MapLat :
+          (d.Latitude != null ? d.Latitude : null))
+        );
+ 
+        var lng = parseFloat(
+          d.lng != null ? d.lng :
+          (d.MapLng != null ? d.MapLng :
+          (d.Longitude != null ? d.Longitude : null))
+        );
+ 
+        if (isNaN(lat) || isNaN(lng)) return;
+ 
+        var addr   = d.addr  || d.MapAddr || d.설치주소 || "주소 정보 없음";
+        var color  = d.color || d.PinColor || "#C62828";
+        var dbtype = d.type  || d.DBType  || "";
+        var pinId  = d.id    || d.PinID   || "";
+ 
+        var isDone = String(color).toUpperCase() === "#1E88E5";
+ 
+        var marker = new kakao.maps.Marker({
+          map: map,
+          position: new kakao.maps.LatLng(lat, lng),
+          image: makePinByType(color, dbtype, false)
+        });
+ 
+        bounds.extend(new kakao.maps.LatLng(lat, lng));
+ 
+        kakao.maps.event.addListener(marker, "click", function () {
+          var badge = isDone
+            ? '<span class="badge badge-blue">처리완료</span>'
+            : '<span class="badge badge-red">미처리</span>';
+ 
+          var typeTxt = dbtype ? ('<div class="type">' + escapeHtml(dbtype) + '</div>') : "";
+ 
+          var btn = "";
+          if (pinId) {
+            var deepUrl = buildDeepLink(pinId);
+            btn = '<a class="inputBtn" href="' + deepUrl + '">이 장비 입력하기 ▶</a>';
+          }
+ 
+          var html =
+            '<div class="iw">' +
+              badge +
+              typeTxt +
+              '<div class="addr">' + escapeHtml(addr) + '</div>' +
+              btn +
+            '</div>';
+ 
+          iw.setContent(html);
+          iw.open(map, marker);
+        });
+      });
+ 
+      if (!hasMyLoc && devices.length > 0) {
+        map.setBounds(bounds);
+      }
+ 
+      document.getElementById("recenter").addEventListener("click", function () {
+        if (hasMyLoc) {
+          map.setCenter(new kakao.maps.LatLng(centerLat, centerLng));
+          map.setLevel(5);
+        } else {
+          map.setBounds(bounds);
+        }
+      });
+    });
+ 
+    // ------------------------------------------------------------
+    // 타입별 핀 생성
+    // 내 위치 = 초록 핀
+    // AGW = 전화기 아이콘
+    // 전기협정 = 번개 아이콘
+    // ------------------------------------------------------------
+    function makePinByType(hex, dbtype, isMe) {
+      var size = isMe ? 28 : 24;
+      var iconSvg = "";
+      var viewBox = "";
+      var height = "";
+ 
+      if (isMe) {
+        viewBox = "0 0 24 32";
+        height = size + 8;
+ 
+        iconSvg =
+          '<path d="M12 0C6 0 1 5 1 11c0 8 11 21 11 21s11-13 11-21C23 5 18 0 12 0z" fill="' + hex + '" stroke="#fff" stroke-width="2"/>' +
+          '<circle cx="12" cy="11" r="4" fill="#fff"/>';
+      } else {
+        viewBox = "0 0 24 24";
+        height = size;
+ 
+        if (dbtype === "AGW") {
+          // 전화기 아이콘
+          iconSvg =
+            '<circle cx="12" cy="12" r="11" fill="' + hex + '" stroke="#fff" stroke-width="2"/>' +
+            '<rect x="8.2" y="5.8" width="7.6" height="12.4" rx="1.4" fill="#fff"/>' +
+            '<rect x="9.5" y="7.4" width="5" height="7" rx="0.5" fill="' + hex + '"/>' +
+            '<circle cx="12" cy="16.8" r="0.9" fill="' + hex + '"/>';
+        } else if (dbtype === "전기협정") {
+          // 번개 아이콘
+          iconSvg =
+            '<circle cx="12" cy="12" r="11" fill="' + hex + '" stroke="#fff" stroke-width="2"/>' +
+            '<path d="M13.5 4.5L7.8 13h3.8l-1.1 6.4 5.8-8.4h-3.8l1-6.5z" fill="#fff"/>';
+        } else {
+          // 기본 동그라미
+          iconSvg =
+            '<circle cx="12" cy="12" r="11" fill="' + hex + '" stroke="#fff" stroke-width="2"/>' +
+            '<circle cx="12" cy="12" r="4" fill="#fff"/>';
+        }
+      }
+ 
+      var svg =
+        '<svg xmlns="http://www.w3.org/2000/svg" width="' + size + '" height="' + height + '" viewBox="' + viewBox + '">' +
+        iconSvg +
+        '</svg>';
+ 
+      var url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+ 
+      return new kakao.maps.MarkerImage(
+        url,
+        new kakao.maps.Size(size, height),
+        {
+          offset: isMe
+            ? new kakao.maps.Point(size / 2, height)
+            : new kakao.maps.Point(size / 2, size / 2)
+        }
+      );
+    }
+ 
+    // ------------------------------------------------------------
+    // HTML escape
+    // ------------------------------------------------------------
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, function (c) {
+        return {
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;'
+        }[c];
+      });
+    }
+  </script>
 </body>
 </html>
