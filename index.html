@@ -84,7 +84,7 @@
  
     .iw {
       padding: 12px 14px;
-      min-width: 220px;
+      min-width: 240px;
       font-size: 13px;
       line-height: 1.6;
       box-sizing: border-box;
@@ -113,6 +113,12 @@
       margin-top: 4px;
       font-weight: 600;
       word-break: keep-all;
+    }
+ 
+    .iw .detail {
+      margin-top: 8px;
+      font-size: 12px;
+      line-height: 1.7;
     }
  
     .iw .inputBtn {
@@ -164,8 +170,8 @@
  
   <div id="legend">
     <span class="dot dot-green"></span>내 위치<br>
-    <span class="dot dot-blue"></span>처리완료<br>
-    <span class="dot dot-red"></span>미처리
+    <span class="dot dot-blue"></span>확인완료<br>
+    <span class="dot dot-red"></span>미확인
   </div>
  
   <button id="recenter" title="내 위치로">◎</button>
@@ -250,7 +256,7 @@
       }
  
       // ------------------------------------------------------------
-      // Power Apps에서 넘어온 장비 데이터 읽기
+      // Power Apps에서 넘어온 장비 데이터
       // ------------------------------------------------------------
       var devices = [];
  
@@ -282,26 +288,18 @@
       }
  
       devices.forEach(function (d) {
-        var lat = parseFloat(
-          d.lat != null ? d.lat :
-          (d.MapLat != null ? d.MapLat :
-          (d.Latitude != null ? d.Latitude : null))
-        );
- 
-        var lng = parseFloat(
-          d.lng != null ? d.lng :
-          (d.MapLng != null ? d.MapLng :
-          (d.Longitude != null ? d.Longitude : null))
-        );
+        var lat = parseFloat(d.lat);
+        var lng = parseFloat(d.lng);
  
         if (isNaN(lat) || isNaN(lng)) return;
  
-        var addr   = d.addr  || d.MapAddr || d.설치주소 || "주소 정보 없음";
-        var color  = d.color || d.PinColor || "#C62828";
-        var dbtype = d.type  || d.DBType  || "";
-        var pinId  = d.id    || d.PinID   || "";
- 
-        var isDone = String(color).toUpperCase() === "#1E88E5";
+        var addr     = d.addr || "주소 정보 없음";
+        var color    = d.color || "#C62828";
+        var dbtype   = d.type || "";
+        var pinId    = d.id || "";
+        var status   = d.status || "";
+        var alias    = d.alias || "-";
+        var pingloss = d.pingloss || "-";
  
         var marker = new kakao.maps.Marker({
           map: map,
@@ -312,11 +310,13 @@
         bounds.extend(new kakao.maps.LatLng(lat, lng));
  
         kakao.maps.event.addListener(marker, "click", function () {
-          var badge = isDone
-            ? '<span class="badge badge-blue">처리완료</span>'
-            : '<span class="badge badge-red">미처리</span>';
- 
           var typeTxt = dbtype ? ('<div class="type">' + escapeHtml(dbtype) + '</div>') : "";
+ 
+          var statusText = String(status || "").trim();
+ 
+          var badge = statusText
+            ? '<span class="badge badge-blue">확인완료 [' + escapeHtml(statusText) + ']</span>'
+            : '<span class="badge badge-red">미확인</span>';
  
           var btn = "";
           if (pinId) {
@@ -329,6 +329,10 @@
               badge +
               typeTxt +
               '<div class="addr">' + escapeHtml(addr) + '</div>' +
+              '<div class="detail">' +
+                '<div><b>시설별칭</b> : ' + escapeHtml(alias) + '</div>' +
+                '<div><b>PingLoss</b> : ' + escapeHtml(pingloss) + '</div>' +
+              '</div>' +
               btn +
             '</div>';
  
@@ -354,8 +358,8 @@
     // ------------------------------------------------------------
     // 타입별 핀 생성
     // 내 위치 = 초록 핀
-    // AGW = 전화기 아이콘
-    // 전기협정 = 번개 아이콘
+    // AGW = 전화기
+    // 전기협정 = 번개
     // ------------------------------------------------------------
     function makePinByType(hex, dbtype, isMe) {
       var size = isMe ? 28 : 24;
@@ -375,19 +379,19 @@
         height = size;
  
         if (dbtype === "AGW") {
-          // 전화기 아이콘
+          // 전화기
           iconSvg =
             '<circle cx="12" cy="12" r="11" fill="' + hex + '" stroke="#fff" stroke-width="2"/>' +
             '<rect x="8.2" y="5.8" width="7.6" height="12.4" rx="1.4" fill="#fff"/>' +
             '<rect x="9.5" y="7.4" width="5" height="7" rx="0.5" fill="' + hex + '"/>' +
             '<circle cx="12" cy="16.8" r="0.9" fill="' + hex + '"/>';
         } else if (dbtype === "전기협정") {
-          // 번개 아이콘
+          // 번개
           iconSvg =
             '<circle cx="12" cy="12" r="11" fill="' + hex + '" stroke="#fff" stroke-width="2"/>' +
             '<path d="M13.5 4.5L7.8 13h3.8l-1.1 6.4 5.8-8.4h-3.8l1-6.5z" fill="#fff"/>';
         } else {
-          // 기본 동그라미
+          // 기본
           iconSvg =
             '<circle cx="12" cy="12" r="11" fill="' + hex + '" stroke="#fff" stroke-width="2"/>' +
             '<circle cx="12" cy="12" r="4" fill="#fff"/>';
