@@ -299,7 +299,7 @@
         var pinId    = d.id || "";
         var status   = d.status || "";
         var alias    = d.alias || "-";
-        var pingloss = d.pingloss || "-";
+        var pingloss = d.pingloss || d.PingLoss || "-";
  
         var marker = new kakao.maps.Marker({
           map: map,
